@@ -1,15 +1,9 @@
+use std::collections::HashMap;
+
 advent_of_code::solution!(1);
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let mut i = -1;
-    let (mut left, mut right): (Vec<u32>, Vec<u32>) = input
-        .lines()
-        .flat_map(|line| line.split_whitespace())
-        .map(|n| n.parse::<u32>().unwrap())
-        .partition(|_| {
-            i += 1;
-            i % 2 == 0
-        });
+    let (mut left, mut right) = prepare_data(input);
     left.sort_unstable();
     right.sort_unstable();
 
@@ -22,8 +16,31 @@ pub fn part_one(input: &str) -> Option<u32> {
     Some(result)
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u32> {
+    let (left, right) = prepare_data(input);
+
+    let right_counts = right.into_iter().fold(HashMap::new(), |mut acc, el| {
+        *acc.entry(el).or_insert(0) += 1;
+        acc
+    });
+    let result = left
+        .into_iter()
+        .map(|el| el * right_counts.get(&el).copied().unwrap_or(0))
+        .sum();
+
+    Some(result)
+}
+
+fn prepare_data(input: &str) -> (Vec<u32>, Vec<u32>) {
+    input
+        .lines()
+        .filter_map(|line| {
+            let mut nums = line
+                .split_whitespace()
+                .filter_map(|n| n.parse::<u32>().ok());
+            Some((nums.next()?, nums.next()?))
+        })
+        .unzip()
 }
 
 #[cfg(test)]
