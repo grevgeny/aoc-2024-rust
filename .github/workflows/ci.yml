@@ -4,6 +4,7 @@ on: push
 
 env:
     CARGO_TERM_COLOR: always
+    RUST_VERSION: 1.83.0
 
 jobs:
     ci:
@@ -11,6 +12,13 @@ jobs:
         name: Continuous Integration
         steps:
             - uses: actions/checkout@v4
+
+            - name: Set Rust version
+              run: |
+                  rustup toolchain install ${{ env.RUST_VERSION }}
+                  rustup default ${{ env.RUST_VERSION }}
+                  rustup component add clippy rustfmt
+
             - name: Set up cargo cache
               uses: actions/cache@v4
               continue-on-error: false
@@ -23,9 +31,12 @@ jobs:
                       target/
                   key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
                   restore-keys: ${{ runner.os }}-cargo-
+
             - name: cargo test
               run: cargo test
+
             - name: cargo clippy
               run: cargo clippy -- -D warnings
+
             - name: cargo fmt
               run: cargo fmt --check
