@@ -4,13 +4,10 @@ advent_of_code::solution!(3);
 
 pub fn part_one(input: &str) -> Option<u32> {
     let tokens = tokenizer(input);
-    if tokens.is_empty() {
-        return Some(0);
-    }
 
     let mut total_result = 0;
-
     let mut tok_cursor = 0;
+
     while tok_cursor < tokens.len() {
         match tokens[tok_cursor] {
             Token::Mul => {
@@ -18,23 +15,50 @@ pub fn part_one(input: &str) -> Option<u32> {
                 if end > tokens.len() {
                     break;
                 }
-                if let Some(result) = process_seq(&tokens[start..end]) {
-                    total_result += result;
-                    tok_cursor += 6;
-                } else {
-                    tok_cursor += 1;
-                };
+                if let Some((num1, num2)) = process_seq(&tokens[start..end]) {
+                    total_result += num1 * num2;
+                    tok_cursor += 5;
+                }
             }
             Token::Eof => break,
-            _ => tok_cursor += 1,
+            _ => {}
         }
+        tok_cursor += 1
     }
 
     Some(total_result)
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u32> {
+    let tokens = tokenizer(input);
+
+    let mut total_result = 0;
+    let mut tok_cursor = 0;
+    let mut mul_enabled = true;
+
+    while tok_cursor < tokens.len() {
+        match tokens[tok_cursor] {
+            Token::Mul => {
+                let (start, end) = (tok_cursor, (tok_cursor + 6));
+                if end > tokens.len() {
+                    break;
+                }
+                if let Some((num1, num2)) = process_seq(&tokens[start..end]) {
+                    if mul_enabled {
+                        total_result += num1 * num2;
+                    }
+                    tok_cursor += 5;
+                }
+            }
+            Token::Do => mul_enabled = true,
+            Token::Dont => mul_enabled = false,
+            Token::Eof => break,
+            _ => {}
+        }
+        tok_cursor += 1
+    }
+
+    Some(total_result)
 }
 
 #[derive(Debug)]
@@ -43,6 +67,8 @@ enum Token {
     CloseParen,
     Comma,
     Mul,
+    Do,
+    Dont,
     Number(u32),
     WhiteSpace,
     Invalid,
@@ -58,9 +84,18 @@ fn tokenizer(input: &str) -> Vec<Token> {
             '(' => tokens.push(Token::OpenParen),
             ')' => tokens.push(Token::CloseParen),
             ',' => tokens.push(Token::Comma),
-            'm' => {
-                if iter.next_if_eq(&'u').is_some() && iter.next_if_eq(&'l').is_some() {
-                    tokens.push(Token::Mul);
+            'm' if matches_suffix(&mut iter, "ul") => {
+                tokens.push(Token::Mul);
+            }
+            'd' => {
+                if matches_suffix(&mut iter, "o") {
+                    if matches_suffix(&mut iter, "n't()") {
+                        tokens.push(Token::Dont);
+                    } else if matches_suffix(&mut iter, "()") {
+                        tokens.push(Token::Do);
+                    } else {
+                        tokens.push(Token::Invalid);
+                    }
                 } else {
                     tokens.push(Token::Invalid);
                 }
@@ -86,14 +121,22 @@ fn tokenizer(input: &str) -> Vec<Token> {
     tokens
 }
 
-fn process_seq(seq: &[Token]) -> Option<u32> {
+fn matches_suffix(iter: &mut std::iter::Peekable<std::str::Chars>, keyword: &str) -> bool {
+    for expected in keyword.chars() {
+        if iter.next_if_eq(&expected).is_none() {
+            return false;
+        }
+    }
+    true
+}
+
+fn process_seq(seq: &[Token]) -> Option<(u32, u32)> {
     use Token::*;
 
-    if let [Mul, OpenParen, Number(num1), Comma, Number(num2), CloseParen] = seq {
-        return Some(num1 * num2);
+    match seq {
+        [Mul, OpenParen, Number(num1), Comma, Number(num2), CloseParen] => Some((*num1, *num2)),
+        _ => None,
     }
-
-    None
 }
 
 #[cfg(test)]
@@ -102,13 +145,17 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let result = part_one(&advent_of_code::template::read_file("examples", DAY));
+        let result = part_one(&advent_of_code::template::read_file_part(
+            "examples", DAY, 1,
+        ));
         assert_eq!(result, Some(161));
     }
 
     #[test]
     fn test_part_two() {
-        let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        let result = part_two(&advent_of_code::template::read_file_part(
+            "examples", DAY, 2,
+        ));
+        assert_eq!(result, Some(48));
     }
 }
