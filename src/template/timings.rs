@@ -178,6 +178,7 @@ impl TryFrom<&JsonValue> for Timing {
 /* -------------------------------------------------------------------------- */
 
 #[cfg(feature = "test_lib")]
+#[cfg(test)]
 mod tests {
     use crate::day;
 
@@ -208,6 +209,7 @@ mod tests {
         }
     }
 
+    #[cfg(test)]
     mod deserialization {
         use crate::{day, template::timings::Timings};
 
@@ -245,22 +247,23 @@ mod tests {
         }
     }
 
+    #[cfg(test)]
     mod serialization {
-        use super::get_mock_timings;
         use std::collections::HashMap;
-        use tinyjson::JsonValue;
+
+        use super::get_mock_timings;
 
         #[test]
         fn serializes_timings() {
             let timings = get_mock_timings();
-            let value = JsonValue::try_from(timings).unwrap();
+            let value = tinyjson::JsonValue::from(timings);
             assert_eq!(
                 value
-                    .get::<HashMap<String, JsonValue>>()
+                    .get::<HashMap<String, tinyjson::JsonValue>>()
                     .unwrap()
                     .get("data")
                     .unwrap()
-                    .get::<Vec<JsonValue>>()
+                    .get::<Vec<tinyjson::JsonValue>>()
                     .unwrap()
                     .len(),
                 3
@@ -268,6 +271,7 @@ mod tests {
         }
     }
 
+    #[cfg(test)]
     mod is_day_complete {
         use crate::{
             day,
@@ -285,7 +289,7 @@ mod tests {
                 }],
             };
 
-            assert_eq!(timings.is_day_complete(&day!(1)), true);
+            assert!(timings.is_day_complete(day!(1)));
         }
 
         #[test]
@@ -299,7 +303,7 @@ mod tests {
                 }],
             };
 
-            assert_eq!(timings.is_day_complete(&day!(1)), false);
+            assert!(!timings.is_day_complete(day!(1)));
         }
 
         #[test]
@@ -313,10 +317,11 @@ mod tests {
                 }],
             };
 
-            assert_eq!(timings.is_day_complete(&day!(1)), false);
+            assert!(!timings.is_day_complete(day!(1)));
         }
     }
 
+    #[cfg(test)]
     mod merge {
         use crate::{
             day,

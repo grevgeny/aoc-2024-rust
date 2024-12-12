@@ -39,6 +39,7 @@ fn run_timed<I: Clone, T>(
 
         func(input)
     };
+
     let base_time = timer.elapsed();
 
     hook(&result);
