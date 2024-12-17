@@ -34,10 +34,7 @@ struct Map {
 }
 
 impl Map {
-    fn adjacent(
-        &self,
-        (i, j): (usize, usize),
-    ) -> impl Iterator<Item = (usize, usize)> + use<'_> {
+    fn adjacent(&self, (i, j): (usize, usize)) -> impl Iterator<Item = (usize, usize)> + use<'_> {
         [
             (i.wrapping_sub(1), j),
             (i + 1, j),
